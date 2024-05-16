@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import {
   BaseEntity,
   Column,
@@ -22,6 +23,7 @@ export class Auth extends BaseEntity {
   email: string;
 
   @Column({ nullable: false })
+  @Exclude({ toPlainOnly: true })
   password: string;
 
   @Column({ length: 255, nullable: false })
@@ -35,6 +37,9 @@ export class Auth extends BaseEntity {
 
   @Column({ type: 'enum', enum: Role, default: Role.USER })
   role: Role;
+
+  @Column({ nullable: true, name: 'refresh_token' })
+  refreshToken: string;
 
   @CreateDateColumn()
   createAt: Date;

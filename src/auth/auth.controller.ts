@@ -17,9 +17,11 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
+  @HttpCode(HttpStatus.CREATED)
   @UsePipes(new ValidationPipe())
   async create(@Body() registerDto: RegisterDto) {
     const existEmail = await this.authService.isExistByEmail(registerDto.email);
+
     if (existEmail) {
       throw new HttpException('Email already exists!', HttpStatus.BAD_REQUEST);
     }
@@ -29,7 +31,7 @@ export class AuthController {
 
   @Post('login')
   @UsePipes(new ValidationPipe())
-  @HttpCode(200)
+  @HttpCode(HttpStatus.OK)
   async login(@Body() loginDto: LoginDto) {
     const existEmail = await this.authService.isExistByEmail(loginDto.email);
 
@@ -38,5 +40,17 @@ export class AuthController {
     }
 
     return this.authService.login(loginDto);
+  }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh() {
+    return 'Hello';
+  }
+
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async logout() {
+    return 'Logout';
   }
 }

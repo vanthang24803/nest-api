@@ -14,6 +14,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         password: config.get('DB_PASSWORD'),
         autoLoadEntities: true,
         synchronize: true,
+        ssl: {
+          rejectUnauthorized: false,
+        },
+        extra: {
+          sslmode: 'require',
+        },
       }),
       inject: [ConfigService],
     }),

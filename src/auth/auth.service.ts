@@ -9,7 +9,7 @@ import { instanceToPlain } from 'class-transformer';
 import { JwtPayload, Status, Token } from './types';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import * as argon from 'argon2';
+import { Env } from '@/constant';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +20,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private config: ConfigService,
   ) {}
-  
+
   async register(registerDto: RegisterDto) {
     const { password, ...rest } = registerDto;
 
@@ -60,12 +60,26 @@ export class AuthService {
       };
     }
 
+    if (
+      exitingUser.refreshToken &&
+      this.jwtService.decode(exitingUser.refreshToken)?.exp > Date.now() / 1000
+    ) {
+      const accessToken = await this.generateAccessToken(
+        exitingUser.id,
+        exitingUser.email,
+      );
+
+      return {
+        access_token: accessToken,
+        refresh_token: exitingUser.refreshToken,
+      };
+    }
+
     const tokens = await this.generateTokens(exitingUser.id, exitingUser.email);
     await this.updateRfToken(exitingUser.id, tokens.refresh_token);
 
     return tokens;
   }
-
 
   async logout(id: string): Promise<boolean> {
     await this.authRepository.update(id, {
@@ -87,8 +101,24 @@ export class AuthService {
     if (!exitingUser || !exitingUser.refreshToken)
       throw new ForbiddenException('Unauthorized');
 
-    const rtMatches = await argon.verify(exitingUser.refreshToken, rt);
+    const rtMatches = rt === exitingUser.refreshToken;
     if (!rtMatches) throw new ForbiddenException('Unauthorized');
+
+    // Check Exp Rf Token
+    if (
+      exitingUser.refreshToken &&
+      this.jwtService.decode(exitingUser.refreshToken)?.exp > Date.now() / 1000
+    ) {
+      const accessToken = await this.generateAccessToken(
+        exitingUser.id,
+        exitingUser.email,
+      );
+
+      return {
+        access_token: accessToken,
+        refresh_token: exitingUser.refreshToken,
+      };
+    }
 
     const tokens = await this.generateTokens(exitingUser.id, exitingUser.email);
 
@@ -109,11 +139,11 @@ export class AuthService {
 
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(jwtPayload, {
-        secret: this.config.get<string>('SECRET'),
+        secret: this.config.get<string>(Env.SECRET),
         expiresIn: '15m',
       }),
       this.jwtService.signAsync(jwtPayload, {
-        secret: this.config.get<string>('REFRESH'),
+        secret: this.config.get<string>(Env.REFRESH),
         expiresIn: '7d',
       }),
     ]);
@@ -124,14 +154,27 @@ export class AuthService {
     };
   }
 
+  async generateAccessToken(id: string, email: string): Promise<string> {
+    const jwtPayload: JwtPayload = {
+      email,
+      sub: id,
+    };
+
+    const token = await this.jwtService.signAsync(jwtPayload, {
+      secret: this.config.get<string>('SECRET'),
+      expiresIn: '15m',
+    });
+
+    return token;
+  }
+
   /**
    * TODO : Update Refresh Token
    * */
 
   async updateRfToken(id: string, rt: string): Promise<void> {
-    const hash = await argon.hash(rt);
     await this.authRepository.update(id, {
-      refreshToken: hash,
+      refreshToken: rt,
     });
   }
 

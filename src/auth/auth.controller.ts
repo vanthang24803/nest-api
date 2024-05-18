@@ -7,10 +7,15 @@ import {
   HttpException,
   HttpStatus,
   HttpCode,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { LoginDto } from '@/auth/dto/login.dto';
 import { RegisterDto } from '@/auth/dto/register.dto';
 import { AuthService } from '@/auth/auth.service';
+import { AuthGuard } from '@nestjs/passport';
+import { Request } from 'express';
+import { JwtEnum } from '@/constant';
 
 @Controller('auth')
 export class AuthController {
@@ -42,15 +47,19 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
+  @UseGuards(AuthGuard(JwtEnum.JWT_REFRESH))
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh() {
-    return 'Hello';
+  async refresh(@Req() req: Request) {
+    const user = req.user;
+    return await this.authService.refreshToken(user['sub'], user['refreshToken']);
   }
 
-  @Post('refresh')
+  @UseGuards(AuthGuard(JwtEnum.JWT))
+  @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout() {
-    return 'Logout';
+  async logout(@Req() req: Request) {
+    const user = req.user;
+    return await this.authService.logout(user['sub']);
   }
 }

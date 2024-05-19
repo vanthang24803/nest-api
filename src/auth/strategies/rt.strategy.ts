@@ -4,7 +4,7 @@ import { Request } from 'express';
 import { ForbiddenException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtPayload } from '../types';
-import { Env, JwtEnum } from '@/constant';
+import { Env, JwtEnum } from '@/enums';
 
 @Injectable()
 export class RtStrategy extends PassportStrategy(

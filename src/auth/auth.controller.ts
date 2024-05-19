@@ -9,13 +9,14 @@ import {
   HttpCode,
   UseGuards,
   Req,
+  Get,
 } from '@nestjs/common';
 import { LoginDto } from '@/auth/dto/login.dto';
 import { RegisterDto } from '@/auth/dto/register.dto';
 import { AuthService } from '@/auth/auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
-import { JwtEnum } from '@/constant';
+import { JwtEnum } from '@/enums';
 
 @Controller('auth')
 export class AuthController {
@@ -52,7 +53,10 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async refresh(@Req() req: Request) {
     const user = req.user;
-    return await this.authService.refreshToken(user['sub'], user['refreshToken']);
+    return await this.authService.refreshToken(
+      user['sub'],
+      user['refreshToken'],
+    );
   }
 
   @UseGuards(AuthGuard(JwtEnum.JWT))
@@ -61,5 +65,11 @@ export class AuthController {
   async logout(@Req() req: Request) {
     const user = req.user;
     return await this.authService.logout(user['sub']);
+  }
+
+  @Get('roles')
+  @HttpCode(HttpStatus.OK)
+  roles() {
+    return this.authService.getRoles();
   }
 }

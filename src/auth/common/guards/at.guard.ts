@@ -1,4 +1,4 @@
-import { JwtEnum } from '@/constant';
+import { JwtEnum } from '@/enums';
 import { Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { AuthGuard } from '@nestjs/passport';

@@ -4,15 +4,12 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinTable,
+  ManyToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-
-enum Role {
-  ADMIN = 'admin',
-  USER = 'user',
-  MANAGER = 'manager',
-}
+import { Role } from './role.entity';
 
 @Entity('users')
 export class Auth extends BaseEntity {
@@ -26,26 +23,35 @@ export class Auth extends BaseEntity {
   @Exclude({ toPlainOnly: true })
   password: string;
 
-  @Column({ length: 255, nullable: false })
+  @Column({ length: 255, nullable: false, name: 'first_name' })
   firstName: string;
 
-  @Column({ length: 255, nullable: false })
+  @Column({ length: 255, nullable: false, name: 'last_name' })
   lastName: string;
 
   @Column({ nullable: true })
   avatar: string;
 
-  @Column({ type: 'enum', enum: Role, default: Role.USER })
-  role: Role;
-
   @Column({ nullable: true, name: 'refresh_token' })
   refreshToken: string;
 
-  @CreateDateColumn()
+  @Column({ default: false, name: 'verify_email' })
+  verifyEmail: boolean;
+
+  @CreateDateColumn({ name: 'create_at' })
   createAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ name: 'update_at' })
   updateAt: Date;
+
+  @Exclude()
+  @ManyToMany(() => Role, { eager: true, cascade: true })
+  @JoinTable({
+    name: 'users_roles',
+    joinColumn: { name: 'user_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
+  })
+  roles: Role[];
 
   constructor(auth: Partial<Auth>) {
     super();

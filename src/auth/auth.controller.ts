@@ -8,15 +8,13 @@ import {
   HttpStatus,
   HttpCode,
   UseGuards,
-  Req,
   Get,
 } from '@nestjs/common';
 import { LoginDto } from '@/auth/dto/login.dto';
 import { RegisterDto } from '@/auth/dto/register.dto';
 import { AuthService } from '@/auth/auth.service';
-import { AuthGuard } from '@nestjs/passport';
-import { Request } from 'express';
-import { JwtEnum } from '@/enums';
+import { AtGuard, RtGuard } from './common/guards';
+import { GetCurrentUser, GetCurrentUserId } from './common/decorators';
 
 @Controller('auth')
 export class AuthController {
@@ -48,23 +46,21 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  @UseGuards(AuthGuard(JwtEnum.JWT_REFRESH))
+  @UseGuards(RtGuard)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refresh(@Req() req: Request) {
-    const user = req.user;
-    return await this.authService.refreshToken(
-      user['sub'],
-      user['refreshToken'],
-    );
+  async refresh(
+    @GetCurrentUserId() id: string,
+    @GetCurrentUser('refreshToken') refreshToken: string,
+  ) {
+    return await this.authService.refreshToken(id, refreshToken);
   }
 
-  @UseGuards(AuthGuard(JwtEnum.JWT))
+  @UseGuards(AtGuard)
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  async logout(@Req() req: Request) {
-    const user = req.user;
-    return await this.authService.logout(user['sub']);
+  async logout(@GetCurrentUserId() id: string) {
+    return await this.authService.logout(id);
   }
 
   @Get('roles')

@@ -14,7 +14,9 @@ import { LoginDto } from '@/auth/dto/login.dto';
 import { RegisterDto } from '@/auth/dto/register.dto';
 import { AuthService } from '@/auth/auth.service';
 import { AtGuard, RtGuard } from './common/guards';
-import { GetCurrentUser, GetCurrentUserId } from './common/decorators';
+import { GetCurrentUser, GetCurrentUserId, Roles} from './common/decorators';
+import { RolesGuard } from './common/guards/roles.guard';
+import { RoleEnum as Role } from '@/enums';
 
 @Controller('auth')
 export class AuthController {
@@ -46,7 +48,8 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  @UseGuards(RtGuard)
+  @Roles(Role.USER, Role.ADMIN)
+  @UseGuards(RtGuard , RolesGuard)
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refresh(

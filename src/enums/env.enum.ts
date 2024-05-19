@@ -1,4 +1,9 @@
 export enum Env {
-    SECRET = 'SECRET',
-    REFRESH = 'REFRESH'
+  SECRET = 'SECRET',
+  REFRESH = 'REFRESH',
+  DB_HOST = 'DB_HOST',
+  DB_PORT = 'DB_PORT',
+  DB_NAME = 'DB_NAME',
+  DB_USERNAME = 'DB_USERNAME',
+  DB_PASSWORD = 'DB_PASSWORD',
 }

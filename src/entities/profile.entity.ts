@@ -1,4 +1,5 @@
 import { Rank } from '@/enums';
+import { Exclude } from 'class-transformer';
 import {
   BaseEntity,
   Column,
@@ -22,9 +23,11 @@ export class Profile extends BaseEntity {
   @Column({ name: 'rank', type: 'enum', enum: Rank, default: Rank.Bronze })
   rank: Rank;
 
+  @Exclude()
   @CreateDateColumn({ name: 'create_at' })
   createAt: Date;
 
+  @Exclude()
   @UpdateDateColumn({ name: 'update_at' })
   updateAt: Date;
 }

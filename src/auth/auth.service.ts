@@ -15,11 +15,17 @@ import { Token } from './types';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { RoleEnum, RoleEnumType } from '@/enums';
-import { ResetPasswordDto, RegisterDto, LoginDto } from './dto';
+import {
+  ResetPasswordDto,
+  RegisterDto,
+  LoginDto,
+  UpdateProfileDto,
+} from './dto';
 import { ProfileService } from '@/auth/profile/profile.service';
 import { RoleService } from '@/auth/role/role.service';
 import { TokenService } from '@/auth/token/token.service';
 import { MailService } from '@/mail/mail.service';
+import { CloudinaryService } from '@/cloudinary/cloudinary.service';
 
 @Injectable()
 export class AuthService {
@@ -35,6 +41,7 @@ export class AuthService {
     private readonly roleService: RoleService,
     private readonly tokenService: TokenService,
     private readonly mailService: MailService,
+    private readonly uploadService: CloudinaryService,
   ) {}
 
   /**
@@ -366,5 +373,53 @@ export class AuthService {
     await this.authRepository.update(id, {
       refreshToken: rt,
     });
+  }
+
+  /**
+   * TODO : Upload Avatar
+   **/
+
+  async uploadAvatar(id: string, avatar: Express.Multer.File): Promise<object> {
+    const currentUser = await this.getUserById(id);
+    const avatarUpload = await this.uploadService.uploadFile(avatar);
+
+    currentUser.avatar = avatarUpload.url;
+
+    await this.authRepository.save(currentUser);
+
+    return instanceToPlain(currentUser);
+  }
+
+  /**
+   * TODO : Get Profile
+   **/
+
+  async getProfile(id: string): Promise<object> {
+    const currentUser = this.authRepository.findOne({
+      where: { id },
+      relations: {
+        profile: true,
+      },
+    });
+
+    if (!currentUser) throw new UnauthorizedException();
+
+    return instanceToPlain(currentUser);
+  }
+
+  /**
+   * TODO : Update Profile
+   **/
+
+  async updateProfile(id: string, updateProfile: UpdateProfileDto) {
+    const currentUser = await this.getUserById(id);
+
+    currentUser.email = updateProfile.email;
+    currentUser.firstName = updateProfile.firstName;
+    currentUser.lastName = updateProfile.lastName;
+
+    await this.authRepository.save(currentUser);
+
+    return instanceToPlain(currentUser);
   }
 }

@@ -10,5 +10,5 @@ export enum Env {
   MAIL_PORT = 'MAIL_PORT',
   MAIL_USER = 'MAIL_USER',
   MAIL_PASS = 'MAIL_PASS',
-  URL = 'URL'
+  URL = 'URL',
 }

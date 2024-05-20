@@ -36,6 +36,7 @@ export class Auth extends BaseEntity {
   avatar: string;
 
   @Column({ nullable: true, name: 'refresh_token' })
+  @Exclude({ toPlainOnly: true })
   refreshToken: string;
 
   @Column({ default: false, name: 'verify_email' })

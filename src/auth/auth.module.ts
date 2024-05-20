@@ -10,11 +10,14 @@ import { ProfileService } from '@/auth/profile/profile.service';
 import { RoleService } from '@/auth/role/role.service';
 import { TokenService } from './token/token.service';
 import { MailService } from '@/mail/mail.service';
+import { CloudinaryModule } from '@/cloudinary/cloudinary.module'; 
+import { CloudinaryService } from '@/cloudinary/cloudinary.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Auth, Role, Profile]),
     JwtModule.register({}),
+    CloudinaryModule,
   ],
   controllers: [AuthController],
   providers: [
@@ -26,6 +29,7 @@ import { MailService } from '@/mail/mail.service';
     RoleService,
     TokenService,
     MailService,
+    CloudinaryService,
   ],
   exports: [AuthService],
 })

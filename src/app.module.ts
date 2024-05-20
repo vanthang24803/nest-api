@@ -11,5 +11,6 @@ import { MailModule } from './mail/mail.module';
     DatabaseModule,
     MailModule,
   ],
+  providers: [],
 })
 export class AppModule {}

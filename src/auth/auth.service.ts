@@ -7,30 +7,34 @@ import {
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
 
-import { Auth as AuthEntity, Role, Role as RoleEntity } from '@/entities';
+import { Auth as AuthEntity, Role as RoleEntity } from '@/entities';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PasswordUtils } from '@/utils/bcrypt';
 import { instanceToPlain } from 'class-transformer';
-import { Actions, JwtPayload, Token } from './types';
+import { Token } from './types';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { Env, RoleEnum } from '@/enums';
-import { MailerService } from '@nestjs-modules/mailer';
+import { RoleEnum, RoleEnumType } from '@/enums';
 import { ResetPasswordDto, RegisterDto, LoginDto } from './dto';
-import { ProfileService } from '@/profile/profile.service';
+import { ProfileService } from '@/auth/profile/profile.service';
+import { RoleService } from '@/auth/role/role.service';
+import { TokenService } from '@/auth/token/token.service';
+import { MailService } from '@/mail/mail.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private config: ConfigService,
+    private readonly config: ConfigService,
     @InjectRepository(AuthEntity)
     private readonly authRepository: Repository<AuthEntity>,
     @InjectRepository(RoleEntity)
     private readonly roleRepository: Repository<RoleEntity>,
     private readonly passwordUtils: PasswordUtils,
     private readonly jwtService: JwtService,
-    private readonly mailerService: MailerService,
     private readonly profileService: ProfileService,
+    private readonly roleService: RoleService,
+    private readonly tokenService: TokenService,
+    private readonly mailService: MailService,
   ) {}
 
   /**
@@ -53,7 +57,7 @@ export class AuthService {
       password: hashedPassword,
     });
 
-    await this.authRepository.save(user);
+    await this.profileService.createProfile(user);
 
     const userRole = await this.roleRepository.findOneBy({
       name: RoleEnum.USER,
@@ -64,7 +68,7 @@ export class AuthService {
 
       await this.authRepository.save(user);
 
-      const url = await this.getUrlEmail(
+      const url = await this.mailService.getUrlEmail(
         user.id,
         user.email,
         user.roles,
@@ -72,11 +76,11 @@ export class AuthService {
       );
 
       try {
-        await this.mailerService.sendMail({
-          to: user.email,
-          subject: 'Verify Your Email',
-          html: `Click <a href="${url}">here</a> to verify your email.`,
-        });
+        await this.mailService.sendMail(
+          user.email,
+          'Verify Your Email',
+          `Click <a href="${url}">here</a> to verify your email.`,
+        );
 
         return instanceToPlain(user);
       } catch (error) {
@@ -102,12 +106,12 @@ export class AuthService {
       throw new UnauthorizedException('Email or password wrong');
     }
 
-    const isSuccessPassword = await this.passwordUtils.decodePassword(
+    const passwordMatches = await this.passwordUtils.decodePassword(
       loginDto.password,
       exitingUser.password,
     );
 
-    if (!isSuccessPassword) {
+    if (!passwordMatches) {
       throw new UnauthorizedException('Email or password wrong');
     }
 
@@ -119,7 +123,7 @@ export class AuthService {
       exitingUser.refreshToken &&
       this.jwtService.decode(exitingUser.refreshToken)?.exp > Date.now() / 1000
     ) {
-      const accessToken = await this.generateAccessToken(
+      const accessToken = await this.tokenService.generateAccessToken(
         exitingUser.id,
         exitingUser.email,
         exitingUser.roles,
@@ -131,11 +135,12 @@ export class AuthService {
       };
     }
 
-    const tokens = await this.generateTokens(
+    const tokens = await this.tokenService.generateTokens(
       exitingUser.id,
       exitingUser.email,
       exitingUser.roles,
     );
+
     await this.updateRfToken(exitingUser.id, tokens.refresh_token);
 
     return tokens;
@@ -158,13 +163,15 @@ export class AuthService {
    **/
 
   async verifyEmail(token: string): Promise<Token> {
-    const exitingUser = await this.decodeToken(token);
+    const id = await this.tokenService.decodeToken(token);
+
+    const exitingUser = await this.getUserById(id);
 
     exitingUser.verifyEmail = true;
 
     await this.authRepository.save(exitingUser);
 
-    const tokens = await this.generateTokens(
+    const tokens = await this.tokenService.generateTokens(
       exitingUser.id,
       exitingUser.email,
       exitingUser.roles,
@@ -184,7 +191,7 @@ export class AuthService {
 
     if (!exitingUser) throw new NotFoundException();
 
-    const url = await this.getUrlEmail(
+    const url = await this.mailService.getUrlEmail(
       exitingUser.id,
       exitingUser.email,
       exitingUser.roles,
@@ -192,11 +199,11 @@ export class AuthService {
     );
 
     try {
-      await this.mailerService.sendMail({
-        to: exitingUser.email,
-        subject: 'Forgot Password',
-        html: `Click <a href="${url}">here</a> to reset your password.`,
-      });
+      await this.mailService.sendMail(
+        exitingUser.email,
+        'Forgot Password',
+        `Click <a href="${url}">here</a> to reset your password.`,
+      );
 
       return {
         message: 'Reset password mail sended successfully!',
@@ -214,7 +221,9 @@ export class AuthService {
     token: string,
     resetPassword: ResetPasswordDto,
   ): Promise<object> {
-    const exitingUser = await this.decodeToken(token);
+    const id = await this.tokenService.decodeToken(token);
+
+    const exitingUser = await this.getUserById(id);
 
     const passwordMatches = await this.passwordUtils.decodePassword(
       resetPassword.oldPassword,
@@ -256,14 +265,14 @@ export class AuthService {
     const rtMatches = rt === exitingUser.refreshToken;
     if (!rtMatches) throw new ForbiddenException('Unauthorized');
 
-    const roles = this.getNameRole(exitingUser.roles);
+    const roles = this.roleService.getNameRole(exitingUser.roles);
 
     // Check Exp Rf Token
     if (
       exitingUser.refreshToken &&
       this.jwtService.decode(exitingUser.refreshToken)?.exp > Date.now() / 1000
     ) {
-      const accessToken = await this.generateAccessToken(
+      const accessToken = await this.tokenService.generateAccessToken(
         exitingUser.id,
         exitingUser.email,
         roles,
@@ -275,7 +284,7 @@ export class AuthService {
       };
     }
 
-    const tokens = await this.generateTokens(
+    const tokens = await this.tokenService.generateTokens(
       exitingUser.id,
       exitingUser.email,
       roles,
@@ -291,92 +300,56 @@ export class AuthService {
    **/
 
   async getRoles(): Promise<object> {
-    const roles = Object.values(RoleEnum);
-    const roleObjects = [];
-
-    for (const role of roles) {
-      const existingRole = await this.roleRepository.findOneBy({ name: role });
-
-      if (!existingRole) {
-        const newRole = this.roleRepository.create({ name: role });
-        await this.roleRepository.save(newRole);
-        roleObjects.push({ role });
-      }
-    }
-
-    return {
-      message: 'Role created successfully!',
-    };
+    return await this.roleService.createRoles();
   }
 
   /**
-   * TODO : Upgrade Manager Method
+   * TODO : Check Exist Account By Email
    **/
 
-  async upgradeManager(id: string): Promise<object> {
+  async isExistByEmail(email: string) {
+    const user = await this.authRepository.findOneBy({ email });
+    return Boolean(user);
+  }
+
+  /**
+   * TODO : Check Exist Account By Id
+   **/
+
+  async getUserById(id: string) {
+    const user = await this.authRepository.findOneBy({ id });
+    if (!user) throw new NotFoundException();
+    return user;
+  }
+
+  /**
+   * TODO : Upgrade Role Method
+   **/
+
+  async upgradeRole(id: string, role: RoleEnumType): Promise<object> {
     const exitingUser = await this.authRepository.findOneBy({ id });
 
     if (!exitingUser) {
       throw new UnauthorizedException();
     }
 
-    const managerRole = await this.roleRepository.findOneBy({
-      name: RoleEnum.MANAGER,
+    const existRole = await this.roleRepository.findOneBy({
+      name: role,
     });
 
-    if (!managerRole) {
+    if (!existRole) {
       throw new NotFoundException();
     }
 
-    const hasManagerRole = exitingUser.roles.some(
-      (role) => role.name === RoleEnum.MANAGER,
-    );
+    const hasExistRole = exitingUser.roles.some((item) => item.name === role);
 
-    if (!hasManagerRole) {
-      exitingUser.roles.push(managerRole);
+    if (!hasExistRole) {
+      exitingUser.roles.push(existRole);
 
       await this.authRepository.save(exitingUser);
 
       return {
-        message: 'Upgrade Manager successfully!',
-      };
-    }
-
-    return {
-      message: 'The user already has this role !',
-    };
-  }
-
-  /**
-   * TODO : Upgrade Admin Method
-   **/
-
-  async upgradeAdmin(id: string): Promise<object> {
-    const exitingUser = await this.authRepository.findOneBy({ id });
-
-    if (!exitingUser) {
-      throw new UnauthorizedException();
-    }
-
-    const adminRole = await this.roleRepository.findOneBy({
-      name: RoleEnum.ADMIN,
-    });
-
-    if (!adminRole) {
-      throw new NotFoundException();
-    }
-
-    const hasAdminRole = exitingUser.roles.some(
-      (role) => role.name === RoleEnum.ADMIN,
-    );
-
-    if (!hasAdminRole) {
-      exitingUser.roles.push(adminRole);
-
-      await this.authRepository.save(exitingUser);
-
-      return {
-        message: 'Upgrade Admin successfully!',
+        message: `Upgrade ${role} successfully!`,
       };
     }
 
@@ -393,125 +366,5 @@ export class AuthService {
     await this.authRepository.update(id, {
       refreshToken: rt,
     });
-  }
-
-  /**
-   * TODO : Generate Tokens
-   **/
-
-  async generateTokens(
-    id: string,
-    email: string,
-    roles: Role[],
-  ): Promise<Token> {
-    const hashRoles = this.getNameRole(roles);
-
-    const jwtPayload: JwtPayload = {
-      email,
-      sub: id,
-      roles: hashRoles,
-    };
-
-    const [at, rt] = await Promise.all([
-      this.jwtService.signAsync(jwtPayload, {
-        secret: this.config.get<string>(Env.SECRET),
-        expiresIn: '15m',
-      }),
-      this.jwtService.signAsync(jwtPayload, {
-        secret: this.config.get<string>(Env.REFRESH),
-        expiresIn: '7d',
-      }),
-    ]);
-
-    return {
-      access_token: at,
-      refresh_token: rt,
-    };
-  }
-
-  /**
-   * TODO : Generate Access Token
-   **/
-
-  async generateAccessToken(
-    id: string,
-    email: string,
-    roles: Role[],
-  ): Promise<string> {
-    const hashRoles = this.getNameRole(roles);
-
-    const jwtPayload: JwtPayload = {
-      email,
-      sub: id,
-      roles: hashRoles,
-    };
-
-    const token = await this.jwtService.signAsync(jwtPayload, {
-      secret: this.config.get<string>('SECRET'),
-      expiresIn: '15m',
-    });
-
-    return token;
-  }
-
-  /**
-   * TODO : Check Exist Account By Email
-   **/
-
-  async isExistByEmail(email: string) {
-    const user = await this.authRepository.findOneBy({ email });
-    return Boolean(user);
-  }
-
-  /**
-   * TODO : Mapper roles
-   **/
-
-  getNameRole(roles: Role[]) {
-    const roleNames = [];
-    roles.map((item) => roleNames.push(item.name));
-    return roleNames;
-  }
-
-  /**
-   * TODO : Decode Payload JWT Token
-   **/
-
-  async decodeToken(token: string) {
-    const payload = await this.jwtService.decode(token);
-
-    if (payload?.exp < Date.now() / 1000) {
-      throw new UnauthorizedException('Tokens expired!');
-    }
-
-    const exitingUser = await this.authRepository.findOneBy({
-      id: payload.sub,
-    });
-
-    if (!exitingUser) throw new UnauthorizedException();
-
-    return exitingUser;
-  }
-
-  /**
-   * TODO : Get Url Mail Service
-   **/
-
-  async getUrlEmail(
-    id: string,
-    email: string,
-    roles: Role[],
-    actions: Actions,
-  ): Promise<string> {
-    const token = await this.generateAccessToken(id, email, roles);
-
-    const url = `${this.config.get(Env.URL)}/auth/${actions}?token=${token}`;
-
-    return url;
-  }
-
-  test() {
-    const msg = this.profileService.test();
-    return msg;
   }
 }

@@ -4,12 +4,15 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
   JoinTable,
   ManyToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Role } from './role.entity';
+import { Profile } from './profile.entity';
 
 @Entity('users')
 export class Auth extends BaseEntity {
@@ -52,6 +55,10 @@ export class Auth extends BaseEntity {
     inverseJoinColumn: { name: 'role_id', referencedColumnName: 'id' },
   })
   roles: Role[];
+
+  @OneToOne(() => Profile, { cascade: true })
+  @JoinColumn()
+  profile: Profile;
 
   constructor(auth: Partial<Auth>) {
     super();

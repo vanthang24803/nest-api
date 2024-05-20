@@ -6,7 +6,10 @@ import { Auth, Profile, Role } from '@/entities';
 import { PasswordUtils } from '@/utils/bcrypt';
 import { AtStrategy, RtStrategy } from './strategies';
 import { JwtModule } from '@nestjs/jwt';
-import { ProfileService } from '@/profile/profile.service';
+import { ProfileService } from '@/auth/profile/profile.service';
+import { RoleService } from '@/auth/role/role.service';
+import { TokenService } from './token/token.service';
+import { MailService } from '@/mail/mail.service';
 
 @Module({
   imports: [
@@ -14,7 +17,16 @@ import { ProfileService } from '@/profile/profile.service';
     JwtModule.register({}),
   ],
   controllers: [AuthController],
-  providers: [AuthService, PasswordUtils, AtStrategy, RtStrategy, ProfileService],
+  providers: [
+    AuthService,
+    PasswordUtils,
+    AtStrategy,
+    RtStrategy,
+    ProfileService,
+    RoleService,
+    TokenService,
+    MailService,
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}

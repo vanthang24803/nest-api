@@ -67,7 +67,7 @@ export class AuthController {
   @Roles(Role.USER)
   @HttpCode(HttpStatus.OK)
   upgradeManager(@GetCurrentUserId() id: string) {
-    return this.authService.upgradeManager(id);
+    return this.authService.upgradeRole(id, Role.MANAGER);
   }
 
   @Post('admin')
@@ -75,7 +75,7 @@ export class AuthController {
   @Roles(Role.ADMIN)
   @HttpCode(HttpStatus.OK)
   upgradeAdmin(@GetCurrentUserId() id: string) {
-    return this.authService.upgradeAdmin(id);
+    return this.authService.upgradeRole(id, Role.ADMIN);
   }
 
   @Get('verify-email')
@@ -98,5 +98,4 @@ export class AuthController {
   ) {
     return this.authService.resetPassword(token, resetPassword);
   }
-
 }

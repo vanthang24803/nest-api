@@ -10,7 +10,12 @@ import {
   Get,
   Query,
 } from '@nestjs/common';
-import { RegisterDto, LoginDto, ForgotPasswordDto } from '@/auth/dto';
+import {
+  RegisterDto,
+  LoginDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} from '@/auth/dto';
 import { AuthService } from '@/auth/auth.service';
 import { AtGuard, RtGuard } from './common/guards';
 import { GetCurrentUser, GetCurrentUserId, Roles } from './common/decorators';
@@ -84,4 +89,14 @@ export class AuthController {
   forgotPassword(@Body() forgotPassword: ForgotPasswordDto) {
     return this.authService.forgotPassword(forgotPassword.email);
   }
+
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  resetPassword(
+    @Query('token') token: string,
+    @Body() resetPassword: ResetPasswordDto,
+  ) {
+    return this.authService.resetPassword(token, resetPassword);
+  }
+
 }

@@ -387,7 +387,6 @@ export class AuthService {
     await this.cacheManager.set(
       `profile-${(await currentUser).id}`,
       instanceToPlain(currentUser),
-      10,
     );
     return instanceToPlain(currentUser);
   }

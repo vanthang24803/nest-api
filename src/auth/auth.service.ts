@@ -1,19 +1,16 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { Repository } from 'typeorm';
-
-import { Auth as AuthEntity, Role as RoleEntity } from '@/entities';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Auth as AuthEntity } from '@/entities';
 import { PasswordUtils } from '@/utils/bcrypt';
 import { instanceToPlain } from 'class-transformer';
 import { Token } from './types';
 import { JwtService } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
 import { RoleEnum, RoleEnumType } from '@/enums';
 import {
   ResetPasswordDto,
@@ -26,15 +23,16 @@ import { RoleService } from '@/auth/role/role.service';
 import { TokenService } from '@/auth/token/token.service';
 import { MailService } from '@/mail/mail.service';
 import { CloudinaryService } from '@/cloudinary/cloudinary.service';
+import { AuthRepository, RoleRepository } from '@/repositories';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly config: ConfigService,
-    @InjectRepository(AuthEntity)
-    private readonly authRepository: Repository<AuthEntity>,
-    @InjectRepository(RoleEntity)
-    private readonly roleRepository: Repository<RoleEntity>,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private readonly authRepository: AuthRepository,
+    private readonly roleRepository: RoleRepository,
     private readonly passwordUtils: PasswordUtils,
     private readonly jwtService: JwtService,
     private readonly profileService: ProfileService,
@@ -148,7 +146,10 @@ export class AuthService {
       exitingUser.roles,
     );
 
-    await this.updateRfToken(exitingUser.id, tokens.refresh_token);
+    await this.authRepository.updateRfToken(
+      exitingUser.id,
+      tokens.refresh_token,
+    );
 
     return tokens;
   }
@@ -172,7 +173,7 @@ export class AuthService {
   async verifyEmail(token: string): Promise<Token> {
     const id = await this.tokenService.decodeToken(token);
 
-    const exitingUser = await this.getUserById(id);
+    const exitingUser = await this.authRepository.findUserById(id);
 
     exitingUser.verifyEmail = true;
 
@@ -184,7 +185,10 @@ export class AuthService {
       exitingUser.roles,
     );
 
-    await this.updateRfToken(exitingUser.id, tokens.refresh_token);
+    await this.authRepository.updateRfToken(
+      exitingUser.id,
+      tokens.refresh_token,
+    );
 
     return tokens;
   }
@@ -230,7 +234,7 @@ export class AuthService {
   ): Promise<object> {
     const id = await this.tokenService.decodeToken(token);
 
-    const exitingUser = await this.getUserById(id);
+    const exitingUser = await this.authRepository.findUserById(id);
 
     const passwordMatches = await this.passwordUtils.decodePassword(
       resetPassword.oldPassword,
@@ -297,7 +301,10 @@ export class AuthService {
       roles,
     );
 
-    await this.updateRfToken(exitingUser.id, tokens.refresh_token);
+    await this.authRepository.updateRfToken(
+      exitingUser.id,
+      tokens.refresh_token,
+    );
 
     return tokens;
   }
@@ -320,16 +327,6 @@ export class AuthService {
   }
 
   /**
-   * TODO : Check Exist Account By Id
-   **/
-
-  async getUserById(id: string) {
-    const user = await this.authRepository.findOneBy({ id });
-    if (!user) throw new NotFoundException();
-    return user;
-  }
-
-  /**
    * TODO : Upgrade Role Method
    **/
 
@@ -340,9 +337,7 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
-    const existRole = await this.roleRepository.findOneBy({
-      name: role,
-    });
+    const existRole = await this.roleRepository.findByName(role);
 
     if (!existRole) {
       throw new NotFoundException();
@@ -366,21 +361,11 @@ export class AuthService {
   }
 
   /**
-   * TODO : Update Refresh Token
-   **/
-
-  async updateRfToken(id: string, rt: string): Promise<void> {
-    await this.authRepository.update(id, {
-      refreshToken: rt,
-    });
-  }
-
-  /**
    * TODO : Upload Avatar
    **/
 
   async uploadAvatar(id: string, avatar: Express.Multer.File): Promise<object> {
-    const currentUser = await this.getUserById(id);
+    const currentUser = await this.authRepository.findUserById(id);
     const avatarUpload = await this.uploadService.uploadFile(avatar);
 
     currentUser.avatar = avatarUpload.url;
@@ -395,15 +380,15 @@ export class AuthService {
    **/
 
   async getProfile(id: string): Promise<object> {
-    const currentUser = this.authRepository.findOne({
-      where: { id },
-      relations: {
-        profile: true,
-      },
-    });
+    const currentUser = this.authRepository.getProfile(id);
 
     if (!currentUser) throw new UnauthorizedException();
 
+    await this.cacheManager.set(
+      `profile-${(await currentUser).id}`,
+      instanceToPlain(currentUser),
+      10,
+    );
     return instanceToPlain(currentUser);
   }
 
@@ -412,7 +397,7 @@ export class AuthService {
    **/
 
   async updateProfile(id: string, updateProfile: UpdateProfileDto) {
-    const currentUser = await this.getUserById(id);
+    const currentUser = await this.authRepository.findUserById(id);
 
     currentUser.email = updateProfile.email;
     currentUser.firstName = updateProfile.firstName;

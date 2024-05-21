@@ -1,15 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { Role, Role as RoleEntity } from '@/entities';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Role } from '@/entities';
 import { RoleEnum } from '@/enums';
+import { RoleRepository } from '@/repositories';
 
 @Injectable()
 export class RoleService {
-  constructor(
-    @InjectRepository(RoleEntity)
-    private readonly roleRepository: Repository<RoleEntity>,
-  ) {}
+  constructor(private readonly roleRepository: RoleRepository) {}
 
   /**
    * TODO : Create Roles Method
@@ -20,7 +16,7 @@ export class RoleService {
     const roleObjects = [];
 
     for (const role of roles) {
-      const existingRole = await this.roleRepository.findOneBy({ name: role });
+      const existingRole = await this.roleRepository.findByName(role);
 
       if (!existingRole) {
         const newRole = this.roleRepository.create({ name: role });

@@ -11,6 +11,7 @@ import {
   Query,
   UseInterceptors,
   UploadedFile,
+  Inject,
 } from '@nestjs/common';
 import {
   RegisterDto,
@@ -25,11 +26,16 @@ import { GetCurrentUser, GetCurrentUserId, Roles } from './common/decorators';
 import { RolesGuard } from './common/guards/roles.guard';
 import { RoleEnum as Role } from '@/enums';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { CACHE_MANAGER, CacheInterceptor } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @Controller('auth')
 @UsePipes(new ValidationPipe())
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+  ) {}
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
@@ -116,8 +122,13 @@ export class AuthController {
   }
 
   @Get('profile')
+  @UseInterceptors(CacheInterceptor)
   @UseGuards(AtGuard)
-  getProfile(@GetCurrentUserId() id: string) {
+  async getProfile(@GetCurrentUserId() id: string) {
+    const cacheProfile = await this.cacheManager.get(`profile-${id}`);
+    if (cacheProfile) {
+      return cacheProfile;
+    }
     return this.authService.getProfile(id);
   }
 

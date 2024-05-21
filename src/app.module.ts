@@ -5,6 +5,7 @@ import { DatabaseModule } from '@/database/database.module';
 import { MailModule } from './mail/mail.module';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { RedisModule } from './redis/redis.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
     DatabaseModule,
     MailModule,
     CloudinaryModule,
+    RedisModule,
   ],
   providers: [CloudinaryService],
 })

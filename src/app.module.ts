@@ -6,6 +6,8 @@ import { MailModule } from './mail/mail.module';
 import { CloudinaryService } from './cloudinary/cloudinary.service';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { RedisModule } from './redis/redis.module';
+import { ProductModule } from './product/product.module';
+import { CategoriesModule } from './categories/categories.module';
 
 @Module({
   imports: [
@@ -15,6 +17,8 @@ import { RedisModule } from './redis/redis.module';
     MailModule,
     CloudinaryModule,
     RedisModule,
+    ProductModule,
+    CategoriesModule,
   ],
   providers: [CloudinaryService],
 })

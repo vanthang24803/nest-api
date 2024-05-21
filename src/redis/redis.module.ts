@@ -12,7 +12,6 @@ import { Env } from '@/enums';
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         store: redisStore,
-        ttl: 30 * 1000,
         max: 1000,
         host: config.get(Env.REDIS_HOST),
         port: config.get(Env.REDIS_PORT),

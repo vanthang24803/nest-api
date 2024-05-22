@@ -19,8 +19,8 @@ import {
   ForgotPasswordDto,
   ResetPasswordDto,
   UpdateProfileDto,
-} from '@/auth/dto';
-import { AuthService } from '@/auth/auth.service';
+} from '@/router/auth/dto';
+import { AuthService } from '@/router/auth/auth.service';
 import { AtGuard, RtGuard } from './common/guards';
 import { GetCurrentUser, GetCurrentUserId, Roles } from './common/decorators';
 import { RolesGuard } from './common/guards/roles.guard';

@@ -1,4 +1,4 @@
-import { JwtPayloadWithRt } from '@/auth/types';
+import { JwtPayloadWithRt } from '@/router/auth/types';
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
 export const GetCurrentUser = createParamDecorator(

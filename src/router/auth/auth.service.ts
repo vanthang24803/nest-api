@@ -18,11 +18,11 @@ import {
   LoginDto,
   UpdateProfileDto,
 } from './dto';
-import { ProfileService } from '@/auth/profile/profile.service';
-import { RoleService } from '@/auth/role/role.service';
-import { TokenService } from '@/auth/token/token.service';
-import { MailService } from '@/mail/mail.service';
-import { CloudinaryService } from '@/cloudinary/cloudinary.service';
+import { ProfileService } from '@/router/auth/profile/profile.service';
+import { RoleService } from '@/router/auth/role/role.service';
+import { TokenService } from '@/router/auth/token/token.service';
+import { MailService } from '@/configs/mail/mail.service';
+import { CloudinaryService } from '@/configs/cloudinary/cloudinary.service';
 import { AuthRepository, RoleRepository } from '@/repositories';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';

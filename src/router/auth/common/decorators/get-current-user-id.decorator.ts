@@ -1,4 +1,4 @@
-import { JwtPayload } from '@/auth/types';
+import { JwtPayload } from '@/router/auth/types';
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
 export const GetCurrentUserId = createParamDecorator(

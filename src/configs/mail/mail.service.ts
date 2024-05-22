@@ -1,5 +1,5 @@
-import { TokenService } from '@/auth/token/token.service';
-import { Actions } from '@/auth/types';
+import { TokenService } from '@/router/auth/token/token.service';
+import { Actions } from '@/router/auth/types';
 import { Role } from '@/entities';
 import { Env } from '@/enums';
 import { MailerService } from '@nestjs-modules/mailer';

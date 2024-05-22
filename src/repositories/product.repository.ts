@@ -1,5 +1,5 @@
 import { Product as ProductEntity } from '@/entities';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -14,5 +14,13 @@ export class ProductRepository extends Repository<ProductEntity> {
       productRepository.manager,
       productRepository.queryRunner,
     );
+  }
+
+  public async findById(id: string) {
+    const existProduct = await this.productRepository.findOneBy({ id });
+
+    if (!existProduct) throw new NotFoundException();
+
+    return existProduct;
   }
 }

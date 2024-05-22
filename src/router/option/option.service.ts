@@ -1,11 +1,20 @@
 import { Injectable } from '@nestjs/common';
-import { CreateOptionDto } from './dto/create-option.dto';
-import { UpdateOptionDto } from './dto/update-option.dto';
+import { OptionDto } from './dto/option.dto';
+import { OptionRepository } from '@/repositories';
+import { Option } from '@/entities';
 
 @Injectable()
 export class OptionService {
-  create(createOptionDto: CreateOptionDto) {
-    return 'This action adds a new option';
+  constructor(private readonly optionRepository: OptionRepository) {}
+
+  async create(createOption: OptionDto): Promise<Option> {
+    const option = new Option({
+      name: createOption.name,
+    });
+
+    await this.optionRepository.save(option);
+
+    return option;
   }
 
   findAll() {
@@ -16,7 +25,7 @@ export class OptionService {
     return `This action returns a #${id} option`;
   }
 
-  update(id: number, updateOptionDto: UpdateOptionDto) {
+  update(id: number, updateOptionDto: OptionDto) {
     return `This action updates a #${id} option`;
   }
 

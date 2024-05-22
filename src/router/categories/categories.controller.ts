@@ -15,6 +15,7 @@ import { CategoryDto } from './dto/category.dto';
 import { AtGuard } from '@/router/auth/common/guards';
 import { Roles } from '@/router/auth/common/decorators';
 import { RoleEnum as Role } from '@/enums';
+import { ValidationUUID } from '@/utils';
 
 @Controller('categories')
 @UsePipes(new ValidationPipe())
@@ -37,21 +38,24 @@ export class CategoriesController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id', new ValidationUUID()) id: string) {
     return this.categoriesService.findById(id);
   }
 
   @Put(':id')
   @UseGuards(AtGuard)
   @Roles(Role.ADMIN)
-  update(@Param('id') id: string, @Body() updateCategory: CategoryDto) {
+  update(
+    @Param('id', new ValidationUUID()) id: string,
+    @Body() updateCategory: CategoryDto,
+  ) {
     return this.categoriesService.update(id, updateCategory);
   }
 
   @Delete(':id')
   @UseGuards(AtGuard)
   @Roles(Role.ADMIN)
-  remove(@Param('id') id: string) {
+  remove(@Param('id', new ValidationUUID()) id: string) {
     return this.categoriesService.remove(id);
   }
 }

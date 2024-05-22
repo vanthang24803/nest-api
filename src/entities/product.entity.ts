@@ -10,6 +10,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Category, Image, Option } from '@/entities';
+import { Exclude } from 'class-transformer';
 
 @Entity('products')
 export class Product extends BaseEntity {
@@ -22,16 +23,25 @@ export class Product extends BaseEntity {
   @Column({ type: 'text', name: 'product_thumbnail' })
   thumbnail: string;
 
+  @Exclude()
   @Column({ type: 'text', name: 'product_description', nullable: true })
   description: string;
 
+  @Exclude()
   @Column({ type: 'text', name: 'product_guide', nullable: true })
   guide: string;
 
-  @OneToMany(() => Image, (image) => image.product)
+  @Exclude()
+  @OneToMany(() => Image, (image) => image.product, {
+    eager: true,
+    cascade: true,
+  })
   images: Image[];
 
-  @OneToMany(() => Option, (option) => option.product)
+  @OneToMany(() => Option, (option) => option.product, {
+    eager: true,
+    cascade: true,
+  })
   options: Option[];
 
   @ManyToMany(() => Category, { eager: true, cascade: true })

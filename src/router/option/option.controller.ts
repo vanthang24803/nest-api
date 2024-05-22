@@ -8,15 +8,14 @@ import {
   Delete,
 } from '@nestjs/common';
 import { OptionService } from './option.service';
-import { CreateOptionDto } from './dto/create-option.dto';
-import { UpdateOptionDto } from './dto/update-option.dto';
+import { OptionDto } from './dto/option.dto';
 
 @Controller('option')
 export class OptionController {
   constructor(private readonly optionService: OptionService) {}
 
   @Post()
-  create(@Body() createOptionDto: CreateOptionDto) {
+  create(@Body() createOptionDto: OptionDto) {
     return this.optionService.create(createOptionDto);
   }
 
@@ -31,7 +30,7 @@ export class OptionController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateOptionDto: UpdateOptionDto) {
+  update(@Param('id') id: string, @Body() updateOptionDto: OptionDto) {
     return this.optionService.update(+id, updateOptionDto);
   }
 

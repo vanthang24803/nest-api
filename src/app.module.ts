@@ -8,6 +8,10 @@ import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { RedisModule } from './redis/redis.module';
 import { ProductModule } from './product/product.module';
 import { CategoriesModule } from './categories/categories.module';
+import { OptionModule } from './option/option.module';
+import { PlanterModule } from './planter/planter.module';
+import { UploadModule } from './upload/upload.module';
+import { ColorModule } from './color/color.module';
 
 @Module({
   imports: [
@@ -19,6 +23,10 @@ import { CategoriesModule } from './categories/categories.module';
     RedisModule,
     ProductModule,
     CategoriesModule,
+    OptionModule,
+    PlanterModule,
+    UploadModule,
+    ColorModule,
   ],
   providers: [CloudinaryService],
 })

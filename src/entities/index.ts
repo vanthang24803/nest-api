@@ -3,3 +3,7 @@ export * from './role.entity';
 export * from './profile.entity';
 export * from './product.entity';
 export * from './category.entity';
+export * from './image.entity';
+export * from './option.entity';
+export * from './planter.entity';
+export * from './color.entity';

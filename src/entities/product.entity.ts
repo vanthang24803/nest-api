@@ -5,10 +5,11 @@ import {
   Entity,
   JoinTable,
   ManyToMany,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Category } from './category.entity';
+import { Category, Image, Option } from '@/entities';
 
 @Entity('products')
 export class Product extends BaseEntity {
@@ -27,8 +28,11 @@ export class Product extends BaseEntity {
   @Column({ type: 'text', name: 'product_guide', nullable: true })
   guide: string;
 
-  @Column({ type: 'boolean', default: false })
-  published: boolean;
+  @OneToMany(() => Image, (image) => image.product)
+  images: Image[];
+
+  @OneToMany(() => Option, (option) => option.product)
+  options: Option[];
 
   @ManyToMany(() => Category, { eager: true, cascade: true })
   @JoinTable({

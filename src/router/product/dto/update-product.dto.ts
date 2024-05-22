@@ -1,12 +1,12 @@
-import { IsNotEmpty } from "class-validator";
+import { IsNotEmpty } from 'class-validator';
 
-export class UpdateProductDto  {
-    @IsNotEmpty()
-    name: string;
-    
-    @IsNotEmpty()
-    description:string;
+export class UpdateProductDto {
+  @IsNotEmpty()
+  name: string;
 
-    @IsNotEmpty()
-    guide:string;
+  @IsNotEmpty()
+  description: string;
+
+  @IsNotEmpty()
+  guide: string;
 }

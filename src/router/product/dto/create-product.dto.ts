@@ -9,7 +9,6 @@ export class CreateProductDto {
   })
   name: string;
 
-  
   @IsNotEmpty()
   category: CategoryDto;
 

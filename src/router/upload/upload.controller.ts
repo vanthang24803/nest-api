@@ -2,41 +2,38 @@ import {
   Controller,
   Get,
   Post,
-  Body,
-  Patch,
   Param,
   Delete,
+  UseInterceptors,
+  UploadedFiles,
 } from '@nestjs/common';
 import { UploadService } from './upload.service';
-import { CreateUploadDto } from './dto/create-upload.dto';
-import { UpdateUploadDto } from './dto/update-upload.dto';
+import { FilesInterceptor } from '@nestjs/platform-express';
+import { ValidationUUID } from '@/utils';
 
 @Controller('upload')
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
-  @Post()
-  create(@Body() createUploadDto: CreateUploadDto) {
-    return this.uploadService.create(createUploadDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.uploadService.findAll();
+  @Post(':id')
+  @UseInterceptors(FilesInterceptor('files'))
+  create(
+    @UploadedFiles() files: Array<Express.Multer.File>,
+    @Param('id', new ValidationUUID()) id: string,
+  ) {
+    return this.uploadService.create(id, files);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.uploadService.findOne(+id);
+  findAll(@Param('id', new ValidationUUID()) id: string) {
+    return this.uploadService.findAll(id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUploadDto: UpdateUploadDto) {
-    return this.uploadService.update(+id, updateUploadDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.uploadService.remove(+id);
+  @Delete(':id/image/:imageId')
+  remove(
+    @Param('id', new ValidationUUID()) id: string,
+    @Param('imageId') imageId: string,
+  ) {
+    return this.uploadService.remove(id, imageId);
   }
 }

@@ -31,7 +31,10 @@ export class ProductController {
   @UseGuards(AtGuard)
   @Roles(Role.ADMIN)
   @UseInterceptors(FileInterceptor('thumbnail'))
-  create(@UploadedFile() file, @Body() createProductDto: CreateProductDto) {
+  create(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() createProductDto: CreateProductDto,
+  ) {
     return this.productService.create(file, createProductDto);
   }
 
@@ -52,6 +55,8 @@ export class ProductController {
   }
 
   @Put(':id')
+  @UseGuards(AtGuard)
+  @Roles(Role.ADMIN)
   update(
     @Param('id', new ValidationUUID()) id: string,
     @Body() updateProductDto: UpdateProductDto,
@@ -60,6 +65,8 @@ export class ProductController {
   }
 
   @Delete(':id')
+  @UseGuards(AtGuard)
+  @Roles(Role.ADMIN)
   remove(@Param('id', new ValidationUUID()) id: string) {
     return this.productService.remove(id);
   }

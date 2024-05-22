@@ -1,26 +1,62 @@
-import { Injectable } from '@nestjs/common';
-import { CreateUploadDto } from './dto/create-upload.dto';
-import { UpdateUploadDto } from './dto/update-upload.dto';
+import { CloudinaryService } from '@/configs/cloudinary/cloudinary.service';
+import { Image } from '@/entities';
+import { ImageRepository, ProductRepository } from '@/repositories';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 @Injectable()
 export class UploadService {
-  create(createUploadDto: CreateUploadDto) {
-    return 'This action adds a new upload';
+  constructor(
+    private readonly cloudinary: CloudinaryService,
+    private readonly imageRepository: ImageRepository,
+    private readonly productRepository: ProductRepository,
+  ) {}
+
+  async create(
+    id: string,
+    files: Array<Express.Multer.File>,
+  ): Promise<Image[]> {
+    const product = await this.productRepository.findById(id);
+
+    const images = [];
+
+    for (const file of files) {
+      const response = await this.cloudinary.uploadFile(file);
+
+      const newImage = new Image({
+        id: response.public_id,
+        url: response.url,
+      });
+
+      images.push(newImage);
+      product.images.push(newImage);
+    }
+
+    await this.productRepository.save(product);
+
+    return images;
   }
 
-  findAll() {
-    return `This action returns all upload`;
+  async findAll(id: string): Promise<Image[]> {
+    const product = await this.productRepository.findById(id);
+
+    return product.images;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} upload`;
-  }
+  async remove(id: string, imageId: string): Promise<{ message: string }> {
+    const product = await this.productRepository.findById(id);
 
-  update(id: number, updateUploadDto: UpdateUploadDto) {
-    return `This action updates a #${id} upload`;
-  }
+    const image = await this.imageRepository.findOneBy({ id: imageId });
 
-  remove(id: number) {
-    return `This action removes a #${id} upload`;
+    if (!image) throw new NotFoundException('Image not found');
+
+    await this.cloudinary.delete(imageId);
+
+    product.images = product.images.filter((img) => img.id !== imageId);
+
+    await this.productRepository.save(product);
+
+    return {
+      message: 'Image deleted successfully!',
+    };
   }
 }

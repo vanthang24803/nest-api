@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { PlanterService } from './planter.service';
 import { CreatePlanterDto } from './dto/create-planter.dto';
 import { UpdatePlanterDto } from './dto/update-planter.dto';

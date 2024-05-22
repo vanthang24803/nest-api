@@ -1,0 +1,20 @@
+
+echo "Run lint project 😌😌😌😌"
+
+pnpm lint
+
+echo "Check project success ✔️✔️✔️✔️"
+
+echo "Runing build application 💀💀💀💀💀"
+
+pnpm build
+
+echo "Application build success ✔️✔️✔️✔️"
+
+echo "Format your shit code 💩💩💩💩💩💩"
+
+pnpm format
+
+echo "Format code success ✔️✔️✔️✔️"
+
+echo "Sucess 👏👏👏👏👏"

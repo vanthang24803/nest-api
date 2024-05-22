@@ -35,7 +35,7 @@ import { AuthRepository, RoleRepository } from '@/repositories';
     CloudinaryService,
     AuthRepository,
     RoleRepository,
-    RedisModule
+    RedisModule,
   ],
   exports: [AuthService],
 })

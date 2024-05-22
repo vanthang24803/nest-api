@@ -11,7 +11,7 @@ import { join } from 'path';
       useFactory: async (config: ConfigService) => ({
         transport: {
           host: config.get(Env.MAIL_HOST),
-          port : config.get(Env.MAIL_PORT),
+          port: config.get(Env.MAIL_PORT),
           secure: false,
           auth: {
             user: config.get(Env.MAIL_USER),

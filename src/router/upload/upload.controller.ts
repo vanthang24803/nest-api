@@ -6,10 +6,14 @@ import {
   Delete,
   UseInterceptors,
   UploadedFiles,
+  UseGuards,
 } from '@nestjs/common';
 import { UploadService } from './upload.service';
 import { FilesInterceptor } from '@nestjs/platform-express';
 import { ValidationUUID } from '@/utils';
+import { AtGuard } from '../auth/common/guards';
+import { RoleEnum as Role } from '@/enums';
+import { Roles } from '../auth/common/decorators';
 
 @Controller('upload')
 export class UploadController {
@@ -17,6 +21,8 @@ export class UploadController {
 
   @Post(':id')
   @UseInterceptors(FilesInterceptor('files'))
+  @UseGuards(AtGuard)
+  @Roles(Role.ADMIN)
   create(
     @UploadedFiles() files: Array<Express.Multer.File>,
     @Param('id', new ValidationUUID()) id: string,
@@ -30,6 +36,8 @@ export class UploadController {
   }
 
   @Delete(':id/image/:imageId')
+  @UseGuards(AtGuard)
+  @Roles(Role.ADMIN)
   remove(
     @Param('id', new ValidationUUID()) id: string,
     @Param('imageId') imageId: string,

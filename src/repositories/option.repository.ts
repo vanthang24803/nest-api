@@ -1,5 +1,5 @@
-import { Option as OptionEntity } from '@/entities';
-import { Injectable } from '@nestjs/common';
+import { Option, Option as OptionEntity } from '@/entities';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
@@ -14,5 +14,13 @@ export class OptionRepository extends Repository<OptionEntity> {
       optionRepository.manager,
       optionRepository.queryRunner,
     );
+  }
+
+  public async findById(id: string): Promise<Option> {
+    const existOption = await this.findOneBy({ id });
+
+    if (!existOption) throw new NotFoundException('Option not found!');
+
+    return existOption;
   }
 }

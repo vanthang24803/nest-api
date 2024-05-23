@@ -1,35 +1,73 @@
 import { Injectable } from '@nestjs/common';
-import { OptionDto } from './dto/option.dto';
-import { OptionRepository } from '@/repositories';
+import { CreateOptionRequestDto, OptionDto } from './dto/option.dto';
+import { OptionRepository, ProductRepository } from '@/repositories';
 import { Option } from '@/entities';
 
 @Injectable()
 export class OptionService {
-  constructor(private readonly optionRepository: OptionRepository) {}
+  constructor(
+    private readonly optionRepository: OptionRepository,
+    private readonly productRepository: ProductRepository,
+  ) {}
 
-  async create(createOption: OptionDto): Promise<Option> {
-    const option = new Option({
-      name: createOption.name,
-    });
+  async create(
+    id: string,
+    create: CreateOptionRequestDto,
+  ): Promise<Array<Option>> {
+    const existingProduct = await this.productRepository.findById(id);
 
-    await this.optionRepository.save(option);
+    const options = [];
 
-    return option;
+    for (const option of create.options) {
+      const newOption = new Option({
+        name: option.name,
+      });
+
+      await this.optionRepository.save(newOption);
+
+      existingProduct.options.push(newOption);
+      options.push(newOption);
+    }
+
+    await this.productRepository.save(existingProduct);
+
+    return options;
   }
 
-  findAll() {
-    return `This action returns all option`;
+  async findAll(productId: string): Promise<Array<Option>> {
+    const existingProduct = await this.productRepository.findById(productId);
+    return existingProduct.options;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} option`;
+  async update(
+    productId: string,
+    id: string,
+    updateOptionDto: OptionDto,
+  ): Promise<Option> {
+    await this.productRepository.findById(productId);
+
+    const existOption = await this.optionRepository.findById(id);
+
+    existOption.name = updateOptionDto.name;
+
+    await this.optionRepository.save(existOption);
+
+    return existOption;
   }
 
-  update(id: number, updateOptionDto: OptionDto) {
-    return `This action updates a #${id} option`;
-  }
+  async remove(productId: string, id: string): Promise<{ message: string }> {
+    const existingProduct = await this.productRepository.findById(productId);
 
-  remove(id: number) {
-    return `This action removes a #${id} option`;
+    await this.optionRepository.findById(id);
+
+    existingProduct.options = existingProduct.options.filter(
+      (option) => option.id !== id,
+    );
+
+    await this.productRepository.save(existingProduct);
+
+    return {
+      message: 'Option deleted successfully',
+    };
   }
 }

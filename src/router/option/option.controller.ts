@@ -3,39 +3,58 @@ import {
   Get,
   Post,
   Body,
-  Patch,
-  Param,
   Delete,
+  UsePipes,
+  ValidationPipe,
+  Query,
+  Put,
+  UseGuards,
 } from '@nestjs/common';
 import { OptionService } from './option.service';
-import { OptionDto } from './dto/option.dto';
+import { CreateOptionRequestDto, OptionDto } from './dto';
+import { ValidationUUID } from '@/utils';
+import { AtGuard } from '../auth/common/guards';
+import { Roles } from '../auth/common/decorators';
+import { RoleEnum as Role } from '@/enums';
 
-@Controller('option')
+@Controller('options')
+@UsePipes(new ValidationPipe())
 export class OptionController {
   constructor(private readonly optionService: OptionService) {}
 
   @Post()
-  create(@Body() createOptionDto: OptionDto) {
-    return this.optionService.create(createOptionDto);
+  @UseGuards(AtGuard)
+  @Roles(Role.ADMIN)
+  create(
+    @Query('product_id', new ValidationUUID()) productId: string,
+    @Body() create: CreateOptionRequestDto,
+  ) {
+    return this.optionService.create(productId, create);
   }
 
   @Get()
-  findAll() {
-    return this.optionService.findAll();
+  findAll(@Query('product_id', new ValidationUUID()) productId: string) {
+    return this.optionService.findAll(productId);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.optionService.findOne(+id);
+  @Put()
+  @UseGuards(AtGuard)
+  @Roles(Role.ADMIN)
+  update(
+    @Query('product_id', new ValidationUUID()) productId: string,
+    @Query('id', new ValidationUUID()) id: string,
+    @Body() updateOptionDto: OptionDto,
+  ) {
+    return this.optionService.update(productId, id, updateOptionDto);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateOptionDto: OptionDto) {
-    return this.optionService.update(+id, updateOptionDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.optionService.remove(+id);
+  @Delete()
+  @UseGuards(AtGuard)
+  @Roles(Role.ADMIN)
+  remove(
+    @Query('product_id', new ValidationUUID()) productId: string,
+    @Query('id', new ValidationUUID()) id: string,
+  ) {
+    return this.optionService.remove(productId, id);
   }
 }

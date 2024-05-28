@@ -16,8 +16,13 @@ export class OptionRepository extends Repository<OptionEntity> {
     );
   }
 
-  public async findById(id: string): Promise<Option> {
-    const existOption = await this.findOneBy({ id });
+  public async findById(id: string, relation: boolean = false): Promise<Option> {
+    const existOption = await this.findOne({
+      where: { id },
+      relations: {
+        planters: relation,
+      },
+    });
 
     if (!existOption) throw new NotFoundException('Option not found!');
 

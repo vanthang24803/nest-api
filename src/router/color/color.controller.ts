@@ -3,40 +3,79 @@ import {
   Get,
   Post,
   Body,
-  Patch,
   Param,
   Delete,
+  ValidationPipe,
+  UsePipes,
+  Put,
 } from '@nestjs/common';
 import { ColorService } from './color.service';
-import { CreateColorDto } from './dto/create-color.dto';
-import { UpdateColorDto } from './dto/update-color.dto';
+import { UpdateColorDto, CreateColorDto, RemoveColorsDto } from './dto';
+import { GetOptionId, GetPlanterId, GetProductId } from '@/common/decorators';
 
-@Controller('color')
+@Controller('api/products')
+@UsePipes(new ValidationPipe())
 export class ColorController {
   constructor(private readonly colorService: ColorService) {}
 
-  @Post()
-  create(@Body() createColorDto: CreateColorDto) {
-    return this.colorService.create(createColorDto);
+  @Post(':productId/options/:optionId/planters/:planterId/colors')
+  create(
+    @GetProductId() productId: string,
+    @GetOptionId() optionId: string,
+    @GetPlanterId() planterId: string,
+    @Body() createColorDto: CreateColorDto,
+  ) {
+    return this.colorService.create(
+      productId,
+      optionId,
+      planterId,
+      createColorDto,
+    );
   }
 
-  @Get()
-  findAll() {
-    return this.colorService.findAll();
+  @Get(':productId/options/:optionId/planters/:planterId/colors')
+  findAll(
+    @GetProductId() productId: string,
+    @GetOptionId() optionId: string,
+    @GetPlanterId() planterId: string,
+  ) {
+    return this.colorService.findAll(productId, optionId, planterId);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.colorService.findOne(+id);
+  @Get(':productId/options/:optionId/planters/:planterId/colors:id')
+  findOne(
+    @GetProductId() productId: string,
+    @GetOptionId() optionId: string,
+    @GetPlanterId() planterId: string,
+    @Param('id') id: string,
+  ) {
+    return this.colorService.findOne(productId, optionId, planterId, id);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateColorDto: UpdateColorDto) {
-    return this.colorService.update(+id, updateColorDto);
+  @Put(':productId/options/:optionId/planters/:planterId/colors:id')
+  update(
+    @GetProductId() productId: string,
+    @GetOptionId() optionId: string,
+    @GetPlanterId() planterId: string,
+    @Param('id') id: string,
+    @Body() updateColorDto: UpdateColorDto,
+  ) {
+    return this.colorService.update(
+      productId,
+      optionId,
+      planterId,
+      id,
+      updateColorDto,
+    );
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.colorService.remove(+id);
+  @Delete(':productId/options/:optionId/planters/:planterId/colors')
+  remove(
+    @GetProductId() productId: string,
+    @GetOptionId() optionId: string,
+    @GetPlanterId() planterId: string,
+    @Body() removeDto: RemoveColorsDto,
+  ) {
+    return this.colorService.remove(productId, optionId, planterId, removeDto);
   }
 }

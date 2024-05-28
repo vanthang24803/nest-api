@@ -72,9 +72,9 @@ export class ProductService {
 
     return {
       page: Number(page),
-      totalProducts,
+      total_products: totalProducts,
       limit: Number(limit),
-      totalPages,
+      total_pages: totalPages,
       products: instanceToPlain(products),
     };
   }
@@ -114,5 +114,13 @@ export class ProductService {
         name: ILike(`%${name}%`),
       },
     });
+  }
+
+  async delete(id: string): Promise<boolean> {
+    const product = await this.productRepository.findById(id);
+
+    await this.productRepository.remove(product);
+
+    return true;
   }
 }

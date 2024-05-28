@@ -35,6 +35,11 @@ export class OptionController {
     return this.optionService.findAll(productId);
   }
 
+  @Get('/:productId/options/:optionId')
+  findOne(@GetProductId() productId: string, @GetOptionId() optionId: string) {
+    return this.optionService.findOne(productId, optionId);
+  }
+
   @Put('/:productId/options/:optionId')
   @UseGuards(AtGuard)
   @Roles(Role.ADMIN)

@@ -3,40 +3,63 @@ import {
   Get,
   Post,
   Body,
-  Patch,
-  Param,
+  Put,
+  ValidationPipe,
+  UsePipes,
   Delete,
 } from '@nestjs/common';
 import { PlanterService } from './planter.service';
-import { CreatePlanterDto } from './dto/create-planter.dto';
-import { UpdatePlanterDto } from './dto/update-planter.dto';
+import {
+  CreatePlanterDto,
+  DeletePlanter,
+  UpdatePlanterDto,
+} from './dto/planter.dto';
+import { GetOptionId, GetPlanterId, GetProductId } from '@/common/decorators';
 
-@Controller('planter')
+@Controller('api/products')
+@UsePipes(new ValidationPipe())
 export class PlanterController {
   constructor(private readonly planterService: PlanterService) {}
 
-  @Post()
-  create(@Body() createPlanterDto: CreatePlanterDto) {
-    return this.planterService.create(createPlanterDto);
+  @Post(':productId/options/:optionId/planters')
+  create(
+    @GetProductId() productId: string,
+    @GetOptionId() optionId: string,
+    @Body() create: CreatePlanterDto,
+  ) {
+    return this.planterService.create(productId, optionId, create);
   }
 
-  @Get()
-  findAll() {
-    return this.planterService.findAll();
+  @Get(':productId/options/:optionId/planters')
+  findAll(@GetProductId() productId: string, @GetOptionId() optionId: string) {
+    return this.planterService.findAll(productId, optionId);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.planterService.findOne(+id);
+  @Get(':productId/options/:optionId/planters/:planterId')
+  findOne(
+    @GetProductId() productId: string,
+    @GetOptionId() optionId: string,
+    @GetPlanterId() planterId: string,
+  ) {
+    return this.planterService.findOne(productId, optionId, planterId);
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePlanterDto: UpdatePlanterDto) {
-    return this.planterService.update(+id, updatePlanterDto);
+  @Put(':productId/options/:optionId/planters/:planterId')
+  update(
+    @GetProductId() productId: string,
+    @GetOptionId() optionId: string,
+    @GetPlanterId() planterId: string,
+    @Body() update: UpdatePlanterDto,
+  ) {
+    return this.planterService.update(productId, optionId, planterId, update);
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.planterService.remove(+id);
+  @Delete(':productId/options/:optionId/planters')
+  remove(
+    @GetProductId() productId: string,
+    @GetOptionId() optionId: string,
+    @Body() planters: DeletePlanter,
+  ) {
+    return this.planterService.remove(productId, optionId, planters);
   }
 }

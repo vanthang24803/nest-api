@@ -53,12 +53,10 @@ export class CategoriesService {
     return existCategory;
   }
 
-  async remove(id: string): Promise<object> {
+  async remove(id: string): Promise<boolean> {
     const existCategory = await this.findById(id);
     await this.categoryRepository.remove(existCategory);
 
-    return {
-      message: 'Category deleted successfully!',
-    };
+    return true;
   }
 }

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateOptionRequestDto, OptionDto } from './dto/option.dto';
 import { OptionRepository, ProductRepository } from '@/repositories';
 import { Option } from '@/entities';
@@ -15,6 +15,10 @@ export class OptionService {
     create: CreateOptionRequestDto,
   ): Promise<Array<Option>> {
     const existingProduct = await this.productRepository.findById(id);
+
+    if (!Array.isArray(existingProduct.options)) {
+      existingProduct.options = [];
+    }
 
     const options = [];
 
@@ -39,6 +43,21 @@ export class OptionService {
     return existingProduct.options;
   }
 
+  async findOne(productId: string, optionId: string): Promise<Option> {
+    await this.productRepository.findById(productId);
+
+    const existingOption = await this.optionRepository.findOne({
+      where: { id: optionId },
+      relations: {
+        planters: true,
+      },
+    });
+
+    if (!existingOption) throw new NotFoundException();
+
+    return existingOption;
+  }
+
   async update(
     productId: string,
     id: string,
@@ -55,19 +74,13 @@ export class OptionService {
     return existOption;
   }
 
-  async remove(productId: string, id: string): Promise<{ message: string }> {
-    const existingProduct = await this.productRepository.findById(productId);
+  async remove(productId: string, id: string): Promise<boolean> {
+    await this.productRepository.findById(productId);
 
-    await this.optionRepository.findById(id);
+    const existingOption = await this.optionRepository.findById(id);
 
-    existingProduct.options = existingProduct.options.filter(
-      (option) => option.id !== id,
-    );
+    await this.optionRepository.remove(existingOption);
 
-    await this.productRepository.save(existingProduct);
-
-    return {
-      message: 'Option deleted successfully',
-    };
+    return true;
   }
 }

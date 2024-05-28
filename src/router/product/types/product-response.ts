@@ -1,9 +1,9 @@
 import { Product } from '@/entities';
 
 export type ProductResponse = {
-  totalProducts: number;
+  total_products: number;
   page: number;
-  totalPages: number;
+  total_pages: number;
   limit?: number;
   products: Product[] | object;
 };

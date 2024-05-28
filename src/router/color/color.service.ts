@@ -1,26 +1,139 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateColorDto } from './dto/create-color.dto';
 import { UpdateColorDto } from './dto/update-color.dto';
+import {
+  ColorRepository,
+  OptionRepository,
+  PlanterRepository,
+  ProductRepository,
+} from '@/repositories';
+import { Color } from '@/entities';
+import { RemoveColorsDto } from './dto';
 
 @Injectable()
 export class ColorService {
-  create(createColorDto: CreateColorDto) {
-    return 'This action adds a new color';
+  constructor(
+    private readonly optionRepository: OptionRepository,
+    private readonly productRepository: ProductRepository,
+    private readonly planterRepository: PlanterRepository,
+    private readonly colorRepository: ColorRepository,
+  ) {}
+
+  async create(
+    productId: string,
+    optionId: string,
+    planterId: string,
+    createColorDto: CreateColorDto,
+  ): Promise<Array<Color>> {
+    const colors = [];
+
+    await this.productRepository.findById(productId);
+
+    await this.optionRepository.findById(optionId);
+
+    const planter = await this.planterRepository.findById(planterId);
+
+    if (!Array.isArray(planter.colors)) {
+      planter.colors = [];
+    }
+
+    for (const color of createColorDto.colors) {
+      const newColor = new Color({
+        name: color.name,
+        value: color.value,
+      });
+
+      await this.colorRepository.save(newColor);
+
+      planter.colors.push(newColor);
+
+      colors.push(newColor);
+    }
+
+    await this.planterRepository.save(planter);
+
+    return colors;
   }
 
-  findAll() {
-    return `This action returns all color`;
+  async findAll(
+    productId: string,
+    optionId: string,
+    planterId: string,
+  ): Promise<Array<Color>> {
+    await this.productRepository.findById(productId);
+
+    await this.optionRepository.findById(optionId);
+
+    const planter = await this.planterRepository.findById(planterId, true);
+
+    return planter.colors;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} color`;
+  async findOne(
+    productId: string,
+    optionId: string,
+    planterId: string,
+    id: string,
+  ): Promise<Color> {
+    await this.productRepository.findById(productId);
+
+    await this.optionRepository.findById(optionId);
+
+    await this.planterRepository.findById(planterId);
+
+    const color = await this.colorRepository.findOneBy({ id });
+
+    if (!color) throw new NotFoundException();
+
+    return color;
   }
 
-  update(id: number, updateColorDto: UpdateColorDto) {
-    return `This action updates a #${id} color`;
+  async update(
+    productId: string,
+    optionId: string,
+    planterId: string,
+    id: string,
+    updateColorDto: UpdateColorDto,
+  ): Promise<Color> {
+    await this.productRepository.findById(productId);
+
+    await this.optionRepository.findById(optionId);
+
+    await this.planterRepository.findById(planterId);
+
+    const color = await this.colorRepository.findOneBy({ id });
+
+    if (!color) throw new NotFoundException();
+
+    Object.assign(color, updateColorDto);
+
+    await this.colorRepository.save(color);
+
+    return color;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} color`;
+  async remove(
+    productId: string,
+    optionId: string,
+    planterId: string,
+    removeDto: RemoveColorsDto,
+  ): Promise<boolean> {
+    await this.productRepository.findById(productId);
+
+    await this.optionRepository.findById(optionId);
+
+    await this.planterRepository.findById(planterId);
+
+    for (const item of removeDto.colors) {
+      const existingColor = await this.colorRepository.findOneBy({
+        id: item.id,
+      });
+
+      if (!existingColor) throw new NotFoundException();
+
+      await this.colorRepository.remove(existingColor);
+    }
+
+    return true;
   }
 }

@@ -18,7 +18,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Params, ProductQuery } from '@/utils';
 import { AtGuard } from '@/common/guards';
-import { Roles , GetProductId } from '@/common/decorators';
+import { Roles, GetProductId } from '@/common/decorators';
 import { RoleEnum as Role } from '@/enums';
 
 @Controller('api/products')

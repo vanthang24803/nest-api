@@ -1,26 +1,115 @@
 import { Injectable } from '@nestjs/common';
-import { CreatePlanterDto } from './dto/create-planter.dto';
-import { UpdatePlanterDto } from './dto/update-planter.dto';
+import {
+  CreatePlanterDto,
+  DeletePlanter,
+  UpdatePlanterDto,
+} from './dto/planter.dto';
+import {
+  OptionRepository,
+  PlanterRepository,
+  ProductRepository,
+} from '@/repositories';
+import { Planter } from '@/entities';
 
 @Injectable()
 export class PlanterService {
-  create(createPlanterDto: CreatePlanterDto) {
-    return 'This action adds a new planter';
+  constructor(
+    private readonly optionRepository: OptionRepository,
+    private readonly productRepository: ProductRepository,
+    private readonly planterRepository: PlanterRepository,
+  ) {}
+
+  async create(
+    productId: string,
+    optionId: string,
+    create: CreatePlanterDto,
+  ): Promise<Array<Planter>> {
+    await this.productRepository.findById(productId);
+
+    const existingOption = await this.optionRepository.findById(optionId);
+
+    if (!Array.isArray(existingOption.planters)) {
+      existingOption.planters = [];
+    }
+
+    const planterCreated = [];
+
+    for (const planter of create.planters) {
+      const newPlanter = new Planter({
+        name: planter.name,
+        price: planter.price,
+        sale: planter.sale,
+        published: false,
+      });
+
+      await this.planterRepository.save(newPlanter);
+
+      existingOption.planters.push(newPlanter);
+
+      planterCreated.push(newPlanter);
+    }
+
+    await this.optionRepository.save(existingOption);
+
+    return planterCreated;
   }
 
-  findAll() {
-    return `This action returns all planter`;
+  async findAll(productId: string, optionId: string): Promise<Array<Planter>> {
+    await this.productRepository.findById(productId);
+
+    const existingOption = await this.optionRepository.findById(optionId, true);
+
+    return existingOption.planters;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} planter`;
+  async findOne(
+    productId: string,
+    optionId: string,
+    planterId: string,
+  ): Promise<Planter> {
+    await this.productRepository.findById(productId);
+
+    await this.optionRepository.findById(optionId);
+
+    const planter = await this.planterRepository.findById(planterId, true);
+
+    return planter;
   }
 
-  update(id: number, updatePlanterDto: UpdatePlanterDto) {
-    return `This action updates a #${id} planter`;
+  async update(
+    productId: string,
+    optionId: string,
+    planterId: string,
+    updatePlanterDto: UpdatePlanterDto,
+  ): Promise<Planter> {
+    await this.productRepository.findById(productId);
+
+    await this.optionRepository.findById(optionId);
+
+    const planter = await this.planterRepository.findById(planterId, true);
+
+    Object.assign(planter, updatePlanterDto);
+
+    await this.planterRepository.save(planter);
+
+    return planter;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} planter`;
+  async remove(
+    productId: string,
+    optionId: string,
+    body: DeletePlanter,
+  ): Promise<boolean> {
+    await this.productRepository.findById(productId);
+
+    await this.optionRepository.findById(optionId);
+
+    for (const item of body.planters) {
+      const existingPlanter = await this.planterRepository.findById(item.id);
+
+      await this.planterRepository.remove(existingPlanter);
+    }
+
+    return true;
   }
 }

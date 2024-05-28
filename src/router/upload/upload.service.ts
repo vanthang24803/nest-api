@@ -43,8 +43,8 @@ export class UploadService {
     return product.images;
   }
 
-  async remove(id: string, images: ImageDto[]): Promise<{ message: string }> {
-    const product = await this.productRepository.findById(id);
+  async remove(id: string, images: ImageDto[]): Promise<boolean> {
+    await this.productRepository.findById(id);
 
     for (const image of images) {
       const existingImage = await this.imageRepository.findOneBy({
@@ -55,15 +55,9 @@ export class UploadService {
 
       await this.cloudinary.delete(existingImage.id);
 
-      product.images = product.images.filter(
-        (img) => img.id !== existingImage.id,
-      );
+      await this.imageRepository.remove(existingImage);
     }
 
-    await this.productRepository.save(product);
-
-    return {
-      message: 'Deleted successfully!',
-    };
+    return true;
   }
 }

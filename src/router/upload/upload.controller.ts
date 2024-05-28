@@ -2,7 +2,6 @@ import {
   Controller,
   Get,
   Post,
-  Delete,
   UseInterceptors,
   UploadedFiles,
   UseGuards,
@@ -35,7 +34,7 @@ export class UploadController {
     return this.uploadService.findAll(id);
   }
 
-  @Delete(':productId/uploads/delete')
+  @Post(':productId/uploads/delete')
   @UseGuards(AtGuard)
   @Roles(Role.ADMIN)
   remove(@GetProductId() id: string, @Body() images: ImageDto[]) {

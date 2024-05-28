@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Body,
-  Param,
   Delete,
   ValidationPipe,
   UsePipes,
@@ -17,12 +16,12 @@ import { ProductService } from './product.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Params, ProductQuery, ValidationUUID } from '@/utils';
-import { AtGuard } from '../auth/common/guards';
-import { Roles } from '../auth/common/decorators';
+import { Params, ProductQuery } from '@/utils';
+import { AtGuard } from '@/common/guards';
+import { Roles , GetProductId } from '@/common/decorators';
 import { RoleEnum as Role } from '@/enums';
 
-@Controller('products')
+@Controller('api/products')
 @UsePipes(new ValidationPipe())
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
@@ -49,25 +48,25 @@ export class ProductController {
     return this.productService.search(name);
   }
 
-  @Get(':id')
-  findOne(@Param('id', new ValidationUUID()) id: string) {
+  @Get(':productId')
+  findOne(@GetProductId() id: string) {
     return this.productService.findOne(id);
   }
 
-  @Put(':id')
+  @Put(':productId')
   @UseGuards(AtGuard)
   @Roles(Role.ADMIN)
   update(
-    @Param('id', new ValidationUUID()) id: string,
+    @GetProductId() id: string,
     @Body() updateProductDto: UpdateProductDto,
   ) {
     return this.productService.update(id, updateProductDto);
   }
 
-  @Delete(':id')
+  @Delete('productId')
   @UseGuards(AtGuard)
   @Roles(Role.ADMIN)
-  remove(@Param('id', new ValidationUUID()) id: string) {
+  remove(@GetProductId() id: string) {
     return this.productService.remove(id);
   }
 }

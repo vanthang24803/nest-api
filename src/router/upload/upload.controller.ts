@@ -2,46 +2,43 @@ import {
   Controller,
   Get,
   Post,
-  Param,
   Delete,
   UseInterceptors,
   UploadedFiles,
   UseGuards,
+  Body,
 } from '@nestjs/common';
 import { UploadService } from './upload.service';
 import { FilesInterceptor } from '@nestjs/platform-express';
-import { ValidationUUID } from '@/utils';
-import { AtGuard } from '../auth/common/guards';
+import { AtGuard } from '@/common/guards';
 import { RoleEnum as Role } from '@/enums';
-import { Roles } from '../auth/common/decorators';
+import { GetProductId, Roles } from '@/common/decorators';
+import { ImageDto } from './dto/list-image.dto';
 
-@Controller('upload')
+@Controller('api/products/')
 export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
-  @Post(':id')
+  @Post(':productId/uploads')
   @UseInterceptors(FilesInterceptor('files'))
   @UseGuards(AtGuard)
   @Roles(Role.ADMIN)
   create(
     @UploadedFiles() files: Array<Express.Multer.File>,
-    @Param('id', new ValidationUUID()) id: string,
+    @GetProductId() id: string,
   ) {
     return this.uploadService.create(id, files);
   }
 
-  @Get(':id')
-  findAll(@Param('id', new ValidationUUID()) id: string) {
+  @Get(':productId/uploads')
+  findAll(@GetProductId() id: string) {
     return this.uploadService.findAll(id);
   }
 
-  @Delete(':id/image/:imageId')
+  @Delete(':productId/uploads/delete')
   @UseGuards(AtGuard)
   @Roles(Role.ADMIN)
-  remove(
-    @Param('id', new ValidationUUID()) id: string,
-    @Param('imageId') imageId: string,
-  ) {
-    return this.uploadService.remove(id, imageId);
+  remove(@GetProductId() id: string, @Body() images: ImageDto[]) {
+    return this.uploadService.remove(id, images);
   }
 }

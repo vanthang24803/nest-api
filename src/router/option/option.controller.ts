@@ -6,55 +6,50 @@ import {
   Delete,
   UsePipes,
   ValidationPipe,
-  Query,
   Put,
   UseGuards,
 } from '@nestjs/common';
 import { OptionService } from './option.service';
 import { CreateOptionRequestDto, OptionDto } from './dto';
-import { ValidationUUID } from '@/utils';
-import { AtGuard } from '../auth/common/guards';
-import { Roles } from '../auth/common/decorators';
 import { RoleEnum as Role } from '@/enums';
+import { AtGuard } from '@/common/guards';
+import { GetProductId, GetOptionId, Roles } from '@/common/decorators';
 
-@Controller('options')
+@Controller('api/products')
 @UsePipes(new ValidationPipe())
 export class OptionController {
   constructor(private readonly optionService: OptionService) {}
 
-  @Post()
+  @Post('/:productId/options')
   @UseGuards(AtGuard)
   @Roles(Role.ADMIN)
   create(
-    @Query('product_id', new ValidationUUID()) productId: string,
+    @GetProductId() productId: string,
     @Body() create: CreateOptionRequestDto,
   ) {
     return this.optionService.create(productId, create);
   }
 
-  @Get()
-  findAll(@Query('product_id', new ValidationUUID()) productId: string) {
+  @Get('/:productId/options')
+  findAll(@GetProductId() productId: string) {
     return this.optionService.findAll(productId);
   }
 
-  @Put()
+  @Put('/:productId/options/:optionId')
   @UseGuards(AtGuard)
   @Roles(Role.ADMIN)
   update(
-    @Query('product_id', new ValidationUUID()) productId: string,
-    @Query('id', new ValidationUUID()) id: string,
+    @GetProductId() productId: string,
+    @GetOptionId() id: string,
     @Body() updateOptionDto: OptionDto,
   ) {
     return this.optionService.update(productId, id, updateOptionDto);
   }
 
-  @Delete()
+  @Delete('/:productId/options/:optionId')
   @UseGuards(AtGuard)
   @Roles(Role.ADMIN)
-  remove(
-    @Query('product_id', new ValidationUUID()) productId: string,
-    @Query('id', new ValidationUUID()) id: string,
-  ) {
+  remove(@GetProductId() productId: string, @GetOptionId() id: string) {
     return this.optionService.remove(productId, id);
   }
 }

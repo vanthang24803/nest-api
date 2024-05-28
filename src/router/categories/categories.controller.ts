@@ -12,8 +12,8 @@ import {
 } from '@nestjs/common';
 import { CategoriesService } from './categories.service';
 import { CategoryDto } from './dto/category.dto';
-import { AtGuard } from '@/router/auth/common/guards';
-import { Roles } from '@/router/auth/common/decorators';
+import { AtGuard } from '@/common/guards';
+import { Roles } from '@/common/decorators';
 import { RoleEnum as Role } from '@/enums';
 import { ValidationUUID } from '@/utils';
 

@@ -2,6 +2,7 @@ import { CloudinaryService } from '@/configs/cloudinary/cloudinary.service';
 import { Image } from '@/entities';
 import { ImageRepository, ProductRepository } from '@/repositories';
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { ImageDto } from './dto/list-image.dto';
 
 @Injectable()
 export class UploadService {
@@ -42,21 +43,27 @@ export class UploadService {
     return product.images;
   }
 
-  async remove(id: string, imageId: string): Promise<{ message: string }> {
+  async remove(id: string, images: ImageDto[]): Promise<{ message: string }> {
     const product = await this.productRepository.findById(id);
 
-    const image = await this.imageRepository.findOneBy({ id: imageId });
+    for (const image of images) {
+      const existingImage = await this.imageRepository.findOneBy({
+        id: image.id,
+      });
 
-    if (!image) throw new NotFoundException('Image not found');
+      if (!existingImage) throw new NotFoundException('Image not found');
 
-    await this.cloudinary.delete(imageId);
+      await this.cloudinary.delete(existingImage.id);
 
-    product.images = product.images.filter((img) => img.id !== imageId);
+      product.images = product.images.filter(
+        (img) => img.id !== existingImage.id,
+      );
+    }
 
     await this.productRepository.save(product);
 
     return {
-      message: 'Image deleted successfully!',
+      message: 'Deleted successfully!',
     };
   }
 }

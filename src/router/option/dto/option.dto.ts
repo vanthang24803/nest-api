@@ -5,7 +5,6 @@ export class OptionDto {
   name: string;
 }
 
-
 export class CreateOptionRequestDto {
   @IsArray()
   options: OptionDto[];

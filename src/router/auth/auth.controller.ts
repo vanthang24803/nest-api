@@ -21,9 +21,9 @@ import {
   UpdateProfileDto,
 } from '@/router/auth/dto';
 import { AuthService } from '@/router/auth/auth.service';
-import { AtGuard, RtGuard } from './common/guards';
-import { GetCurrentUser, GetCurrentUserId, Roles } from './common/decorators';
-import { RolesGuard } from './common/guards/roles.guard';
+import { AtGuard, RtGuard } from '@/common/guards';
+import { GetCurrentUser, GetCurrentUserId, Roles } from '@/common/decorators';
+import { RolesGuard } from '@/common/guards/roles.guard';
 import { RoleEnum as Role } from '@/enums';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CACHE_MANAGER, CacheInterceptor } from '@nestjs/cache-manager';
